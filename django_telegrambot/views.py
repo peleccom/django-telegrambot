@@ -1,6 +1,8 @@
 # coding=utf-8
 from django.shortcuts import render
 from django.http import JsonResponse
+from telegram import TelegramError
+
 from django_telegrambot.apps import DjangoTelegramBot
 from django.views.decorators.csrf import csrf_exempt
 import sys
@@ -17,13 +19,13 @@ logger = logging.getLogger(__name__)
 
 @csrf_exempt
 def webhook (request, bot_token):
-    
+
     #verifico la validità del token
     bot = DjangoTelegramBot.getBot(bot_token, safe=False)
     if bot is None:
         logger.warn('Request for not found token : {}'.format(bot_token))
         return JsonResponse({})
-    
+
     try:
         data = json.loads(request.body.decode("utf-8"))
 
@@ -35,7 +37,7 @@ def webhook (request, bot_token):
     if dispatcher is None:
         logger.error('Dispatcher for bot <{}> not found : {}'.format(bot.username, bot_token))
         return JsonResponse({})
-        
+
     try:
         update = telegram.Update.de_json(data, bot)
         dispatcher.process_update(update)
@@ -48,6 +50,6 @@ def webhook (request, bot_token):
     # All other errors should not stop the thread, just print them
     except:
         logger.error("Bot <{}> : An uncaught error was raised while processing an update\n{}".format(bot.username, sys.exc_info()[0]))
-    
+
     finally:
         return JsonResponse({})
